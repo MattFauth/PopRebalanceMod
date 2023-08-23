@@ -7,3 +7,5 @@ PopRebalanceMod/__pycache__
 pop_mod/__pycache__/views.cpython-311.pyc
 PopRebalanceMod/__pycache__/urls.cpython-311.pyc
 *.pyc
+pop_mod/__pycache__/views.cpython-311.pyc
+*.pyc

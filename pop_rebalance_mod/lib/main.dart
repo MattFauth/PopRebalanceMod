@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:typed_data';
+
 
 
 void main() {
@@ -61,59 +63,53 @@ class _MyHomePageState extends State<MyHomePage> {
     type: FileType.custom,
     allowedExtensions: ['txt'],
     allowMultiple: true,
+    withData: true,  // This flag is important
   );
 
   if (result != null) {
-    if (result.files.first.bytes != null) {
-      List<Uint8List> byteData = result.files.map((file) => file.bytes!).toList();
-      await _uploadFiles(byteData);
-    } else {
-      // Handle the case for non-web platforms
-      List<File> files = result.paths.map((path) => File(path!)).toList();
-      await _uploadFiles(files);
-    }
+    // Now, result.files should contain the bytes
+    List<Uint8List> byteData = result.files.map((file) => file.bytes!).toList();
+    await _uploadFiles(byteData);
   } else {
     // User canceled the picker
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('No files selected')),
     );
   }
-  }
-
   _isLoading = false;
   // Hide the loading indicator
   setState(() {});
 }
 
 
-  Future<void> _uploadFiles(List<File> files) async {
-    // Show a snackbar for uploading files
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Uploading files...')),
-    );
 
-    // Simulated delay for the upload process
-    await Future.delayed(Duration(seconds: 2));
 
-    // Add file names to _uploadedFiles list
-    for (var file in files) {
-      _uploadedFiles.add(file.path.split("/").last);
-    }
+  Future<void> _uploadFiles(List<Uint8List> byteData) async {
+  // Show a snackbar for uploading files
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Uploading files...')),
+  );
 
-    // Show a snackbar for successful upload
-    ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(content: Text('Files uploaded successfully')),
-    );
-    _isFileLoaded = true;  // Atualizar _isFileLoaded para true aqui
-    setState(() {});
-  }
+  // Simulated delay for the upload process
+  await Future.delayed(Duration(seconds: 2));
+
+  // Add file names to _uploadedFiles list (if needed, you can keep track of file names separately)
+  // ... your logic here ...
+
+  // Show a snackbar for successful upload
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Files uploaded successfully')),
+  );
+  _isFileLoaded = true;  // Update _isFileLoaded to true here
+  setState(() {});
+}
 
 
   Future<void> _countPopulation() async {
   _isCountingPopulation = true;  // Set counting state to true
   setState(() {});
   // Create a multipart request for the POST api call
-  var request = http.MultipartRequest('POST', Uri.parse('http://your_backend_url/count/'));
+  var request = http.MultipartRequest('POST', Uri.parse('http://127.0.0.1:8000/count/'));
   // Attach the files to the request
   for (var file in _uploadedFiles) {
     request.files.add(await http.MultipartFile.fromPath('files', file));
