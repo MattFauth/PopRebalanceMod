@@ -26,7 +26,11 @@ SECRET_KEY = 'django-insecure-u52r(if$5xu2@ndtzaqh#n5*!nujvjnzfgm&-=_levrq#td066
 DEBUG = True
 
 ALLOWED_HOSTS = []
+CORS_ALLOW_ALL_ORIGINS = True  # Para permitir qualquer origem (não recomendado para produção)
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+]
 
 # Application definition
 
@@ -37,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -47,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'PopRebalanceMod.urls'
