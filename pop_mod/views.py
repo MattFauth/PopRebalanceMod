@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 import os
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import FileSystemStorage
 
 # Utility function to save files and return their paths
@@ -28,6 +30,7 @@ def parse_file(filepath):
     return total_size
 
 # Endpoint for file uploads
+@csrf_exempt
 def upload_files(request):
     if request.method == 'POST':
         uploaded_files = request.FILES.getlist('files')
@@ -43,20 +46,33 @@ def upload_files(request):
 
 
 # Endpoint for counting total population
+@csrf_exempt
 def count_population(request):
+    print('Function is called, here is the request: ', request)
     if request.method == 'POST':
+        print('inside the if: ')
+        # Logo após pegar os arquivos carregados:
         uploaded_files = request.FILES.getlist('files')
+        print(f'Number of uploaded files: {len(uploaded_files)}')
+        # Após salvar os arquivos, para verificar os caminhos dos arquivos salvos:
         saved_files = save_files(uploaded_files)
+        print(f'Saved files: {saved_files}')
         grand_total_size = 0
         per_file_count = {}
         for filepath in saved_files:
             total_size = parse_file(filepath)
+            print(f"Total size for {os.path.basename(filepath)}: {total_size}")  # Para registrar o tamanho total de cada arquivo
             per_file_count[os.path.basename(filepath)] = total_size
             grand_total_size += total_size
+            os.remove(filepath)
+        # Antes de retornar a resposta, para verificar a contagem total e por arquivo:
+        print(f'Total population: {grand_total_size}')
+        print(f'Per file count: {per_file_count}')
         return JsonResponse({
             'total_population': grand_total_size,
             'per_file_count': per_file_count
         })
+
 
 # Utility function to scale population in a file
 def scale_file_population(filepath, scaling_factor):
@@ -72,16 +88,23 @@ def scale_file_population(filepath, scaling_factor):
             updated_lines.append(updated_line)
         else:
             updated_lines.append(line)
-    with open(filepath, 'w') as file:
-        file.writelines(updated_lines)
+    # Convert the updated lines to bytes
+    updated_content = ''.join(updated_lines)
+    return updated_content.encode()
+
 
 # Django view function to handle population scaling
+@csrf_exempt
 def scale_population(request):
     if request.method == 'POST':
         uploaded_files = request.FILES.getlist('files')
         saved_files = save_files(uploaded_files)
-        # This should be replaced with real scaling factor, passed from the client
         scaling_factor = float(request.POST.get('scaling_factor', 1))
+        processed_files_data = {}
         for filepath in saved_files:
-            scale_file_population(filepath, scaling_factor)
-        return JsonResponse({'message': 'Population scaled'})
+            filename = os.path.basename(filepath)
+            processed_file_data = scale_file_population(filepath, scaling_factor)
+            # Convert bytes to string and store in the dictionary
+            processed_files_data[filename] = processed_file_data.decode('utf-8')
+            os.remove(filepath)  # Don't forget to remove the file after processing
+        return JsonResponse(processed_files_data)
